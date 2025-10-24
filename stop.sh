@@ -60,6 +60,7 @@ main() {
     
     if [ -d "$PID_DIR" ] && [ -z "$(ls -A $PID_DIR/*.pid 2>/dev/null)" ]; then
         rm -f "$PID_DIR"/*.log 2>/dev/null || true
+        rm -f "$PID_DIR"/port 2>/dev/null || true
     fi
     
     echo ""
