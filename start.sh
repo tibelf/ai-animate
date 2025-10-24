@@ -4,10 +4,6 @@ set -e
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRONTEND_DIR="$ROOT_DIR/frontend"
-PID_DIR="$ROOT_DIR/.pids"
-PORT_FILE="$PID_DIR/port"
-
-mkdir -p "$PID_DIR"
 
 echo "🚀 Starting AI Animate System..."
 
@@ -68,17 +64,14 @@ find_available_port() {
     exit 1
 }
 
-start_frontend() {
-    echo ""
-    echo "🎨 Starting Next.js application..."
-    
+setup_environment() {
     cd "$FRONTEND_DIR"
     
     if [ ! -f ".env.local" ]; then
         echo "⚠️  Warning: .env.local not found. Creating from example..."
         if [ -f ".env.local.example" ]; then
             cp .env.local.example .env.local
-            echo "⚠️  Please edit frontend/.env.local and add your API keys!"
+            echo "📝 Please edit frontend/.env.local and add your API keys!"
         fi
     fi
     
@@ -86,7 +79,9 @@ start_frontend() {
         echo "📦 Installing dependencies..."
         npm install
     fi
-    
+}
+
+start_server() {
     local port
     echo "🔍 Checking port availability..."
     if check_port 3000; then
@@ -98,52 +93,31 @@ start_frontend() {
         echo "✅ Found available port: $port"
     fi
     
-    echo $port > "$PORT_FILE"
+    echo ""
+    echo "🎨 Starting Next.js dev server on port $port..."
+    echo "📍 URL: http://localhost:$port"
+    echo ""
+    echo "💡 Press Ctrl+C to stop the server"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo ""
     
-    echo "🔄 Starting Next.js dev server on port $port..."
-    nohup npm run dev -- -p $port > "$PID_DIR/frontend.log" 2>&1 &
-    FRONTEND_PID=$!
-    echo $FRONTEND_PID > "$PID_DIR/frontend.pid"
-    
-    echo "✅ Next.js started (PID: $FRONTEND_PID)"
-    echo "   URL: http://localhost:$port"
-    echo "   Logs: $PID_DIR/frontend.log"
+    npm run dev -- -p $port
 }
 
-wait_for_service() {
+cleanup() {
     echo ""
-    echo "⏳ Waiting for Next.js to be ready..."
-    sleep 3
-    
-    if ! kill -0 $(cat "$PID_DIR/frontend.pid" 2>/dev/null) 2>/dev/null; then
-        echo "❌ Next.js failed to start. Check logs at $PID_DIR/frontend.log"
-        echo ""
-        echo "📋 Last 20 lines of log:"
-        tail -n 20 "$PID_DIR/frontend.log" 2>/dev/null || echo "No log available"
-        exit 1
-    fi
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "🛑 Shutting down..."
+    exit 0
 }
+
+trap cleanup SIGINT SIGTERM
 
 main() {
     check_dependencies
-    start_frontend
-    wait_for_service
-    
-    local port=$(cat "$PORT_FILE")
-    
-    echo ""
-    echo "🎉 AI Animate System is running!"
-    echo ""
-    echo "📍 Application:"
-    echo "   - URL: http://localhost:$port"
-    if [ "$port" != "3000" ]; then
-        echo "   - Note: Using port $port because 3000 was occupied"
-    fi
-    echo ""
-    echo "📊 Monitor logs:"
-    echo "   - tail -f $PID_DIR/frontend.log"
-    echo ""
-    echo "🛑 To stop: ./stop.sh"
+    setup_environment
+    start_server
 }
 
 main
