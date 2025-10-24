@@ -10,19 +10,18 @@ This system automatically converts novel text into animated short films with cha
 
 ```
 ┌─────────────────────────────────┐
-│   Frontend (Next.js + shadcn/ui)│
-│   - Novel input                  │
-│   - Character confirmation       │
-│   - Progress tracking            │
-│   - Video preview                │
-└───────────────┬─────────────────┘
-                │ REST / WebSocket
-┌───────────────┴─────────────────┐
-│   Backend (FastAPI)              │
-│   - Text parsing (Qiniu LLM)     │
-│   - Pipeline orchestration       │
-│   - Context management           │
-│   - Status tracking              │
+│   Next.js Application            │
+│   ├─ Frontend (React)            │
+│   │  - Novel input               │
+│   │  - Character confirmation    │
+│   │  - Progress tracking         │
+│   │  - Video preview             │
+│   │                              │
+│   └─ Backend (API Routes)        │
+│      - Text parsing (Qiniu LLM)  │
+│      - Pipeline orchestration    │
+│      - Context management        │
+│      - Status tracking           │
 └───────────────┬─────────────────┘
                 │ HTTP APIs
 ┌───────────────┴─────────────────┐
@@ -41,46 +40,37 @@ This system automatically converts novel text into animated short films with cha
 
 ### Prerequisites
 
-- Python 3.10+
 - Node.js 18+
-- Poetry (Python package manager)
+- npm or yarn
 
-### Backend Setup
+### Setup
 
 ```bash
-cd backend
-
 # Install dependencies
-pip install poetry
-poetry install
-
-# Configure API keys
-cp config.yaml.example config.yaml
-# Edit config.yaml and add your Qiniu API key
-
-# Run server
-poetry run python -m app.main
-```
-
-Backend will run at `http://localhost:8000`
-
-### Frontend Setup
-
-```bash
 cd frontend
-
-# Install dependencies
 npm install
 
-# Configure environment
+# Configure environment variables
 cp .env.local.example .env.local
-# Edit .env.local if needed (default points to localhost:8000)
+# Edit .env.local and add your Qiniu API key
 
 # Run development server
 npm run dev
 ```
 
-Frontend will run at `http://localhost:3000`
+Application will run at `http://localhost:3000`
+
+### Using the Start/Stop Scripts
+
+For convenience, you can use the provided scripts:
+
+```bash
+# Start the application
+./start.sh
+
+# Stop the application
+./stop.sh
+```
 
 ## 📋 Features
 
@@ -89,8 +79,8 @@ Frontend will run at `http://localhost:3000`
 - ✅ **Text Parsing**: LLM-powered novel analysis (Qiniu API)
 - ✅ **Context Management**: JSON-based project state with history snapshots
 - ✅ **Serial Pipeline**: Sequential task execution avoiding concurrency issues
-- ✅ **Progress Tracking**: Real-time WebSocket updates
-- ✅ **API Structure**: FastAPI backend with comprehensive endpoints
+- ✅ **Progress Tracking**: Real-time status updates
+- ✅ **API Routes**: Next.js API routes for all backend functionality
 - ✅ **Frontend UI**: Next.js 15 with shadcn/ui components
 - ✅ **Responsive Design**: Mobile-friendly interface
 
@@ -105,37 +95,32 @@ The following services have placeholder implementations ready for integration:
 
 ## 🔧 Configuration
 
-### Backend (config.yaml)
-
-```yaml
-ai_services:
-  llm:
-    base_url: "https://openai.qiniu.com/v1"
-    api_key: "YOUR_QINIU_API_KEY_HERE"
-    model: "deepseek-v3"
-  # Add other service configs as APIs become available
-```
-
-### Frontend (.env.local)
+### Environment Variables (.env.local)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
+# Qiniu LLM Configuration
+QINIU_LLM_BASE_URL=https://openai.qiniu.com/v1
+QINIU_API_KEY=your_qiniu_api_key_here
+QINIU_LLM_MODEL=deepseek-v3
+QINIU_LLM_MAX_TOKENS=4096
+QINIU_LLM_TIMEOUT=60000
+
+# Other AI services (add when available)
+IMAGE_GEN_BASE_URL=
+IMAGE_GEN_API_KEY=
+# ... etc
 ```
 
-## 📚 API Documentation
-
-Once backend is running, visit:
-
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+## 📚 API Routes
 
 ### Main Endpoints
 
-- `POST /api/parse_text` - Parse novel into scenes/characters
-- `POST /api/confirm_character` - Confirm character selection
-- `POST /api/continue_generation` - Continue after confirmation
-- `GET /api/task_status/{project_id}` - Get progress
-- `WebSocket /api/ws/{project_id}` - Real-time updates
+- `POST /api/parse-text` - Parse novel into scenes/characters
+- `POST /api/confirm-character` - Confirm character selection
+- `POST /api/continue-generation?project_id=xxx` - Continue after confirmation
+- `GET /api/task-status/[project_id]` - Get progress
+- `GET /api/context/[project_id]` - Get project context
+- `POST /api/rollback` - Rollback to previous version
 
 ## 🎯 Workflow
 
@@ -149,31 +134,38 @@ Once backend is running, visit:
 
 ```
 ai-animate/
-├── backend/                 # FastAPI backend
+├── frontend/                  # Next.js application
 │   ├── app/
-│   │   ├── agents/         # Pipeline orchestration
-│   │   ├── api/            # REST endpoints
-│   │   ├── core/           # Config & context manager
-│   │   ├── models/         # Pydantic schemas
-│   │   └── services/       # AI service clients
-│   ├── context/            # Project contexts (generated)
-│   └── config.yaml.example # Configuration template
-│
-├── frontend/               # Next.js frontend
-│   ├── app/               # App router pages
-│   ├── components/        # UI components
-│   └── lib/               # API client & utilities
-│
-└── README.md              # This file
+│   │   ├── api/              # API Routes (backend)
+│   │   │   ├── parse-text/
+│   │   │   ├── confirm-character/
+│   │   │   ├── continue-generation/
+│   │   │   ├── task-status/
+│   │   │   ├── context/
+│   │   │   └── rollback/
+│   │   ├── characters/       # Character confirmation page
+│   │   ├── scenes/           # Scene tracking page
+│   │   ├── preview/          # Video preview page
+│   │   └── page.tsx          # Home page (novel input)
+│   ├── components/           # UI components
+│   ├── lib/
+│   │   ├── services/         # AI service clients
+│   │   ├── types/            # TypeScript types
+│   │   └── utils/            # Utilities (context manager, pipeline)
+│   └── ...
+├── context/                  # Project contexts (generated)
+├── start.sh                  # Start script
+├── stop.sh                   # Stop script
+└── README.md                 # This file
 ```
 
 ## 🔌 Adding New AI Services
 
 When API documentation becomes available:
 
-1. Update service client in `backend/app/services/`
-2. Add configuration to `config.yaml`
-3. Update pipeline logic in `backend/app/agents/pipeline.py`
+1. Update service client in `frontend/lib/services/`
+2. Add environment variables to `.env.local`
+3. Update pipeline logic in `frontend/lib/utils/pipeline.ts`
 4. Test integration
 5. Update documentation
 
@@ -188,15 +180,10 @@ Copyright © 2025 AI Animate Team. All rights reserved.
 ## 🙏 Acknowledgments
 
 - **Qiniu AI**: LLM API for text parsing
-- **Next.js**: React framework
-- **FastAPI**: Python API framework
+- **Next.js**: React framework with built-in API routes
 - **shadcn/ui**: Component library
 - **Tailwind CSS**: Styling framework
 
 ---
 
 **Status**: 🟢 Core framework implemented, ready for AI service integration
-
-For detailed setup instructions, see:
-- [Backend README](./backend/README.md)
-- [Frontend README](./frontend/README.md)

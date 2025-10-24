@@ -48,11 +48,6 @@ cleanup_node_processes() {
     pkill -f "next dev" 2>/dev/null || true
 }
 
-cleanup_python_processes() {
-    echo "🧹 Cleaning up any remaining uvicorn processes..."
-    pkill -f "uvicorn app.main:app" 2>/dev/null || true
-}
-
 main() {
     if [ ! -d "$PID_DIR" ]; then
         echo "❌ No PID directory found. Services may not be running."
@@ -60,10 +55,8 @@ main() {
     fi
     
     stop_service "frontend"
-    stop_service "backend"
     
     cleanup_node_processes
-    cleanup_python_processes
     
     if [ -d "$PID_DIR" ] && [ -z "$(ls -A $PID_DIR/*.pid 2>/dev/null)" ]; then
         rm -f "$PID_DIR"/*.log 2>/dev/null || true
