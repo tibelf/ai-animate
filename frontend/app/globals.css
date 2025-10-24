@@ -57,3 +57,22 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .glass-effect {
+    @apply bg-slate-800/30 backdrop-blur-sm border border-slate-600/30;
+  }
+  
+  .glass-card {
+    @apply glass-effect rounded-xl shadow-lg shadow-slate-900/50;
+  }
+  
+  .cyber-gradient {
+    @apply bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700;
+  }
+  
+  .cyber-button {
+    @apply cyber-gradient hover:from-slate-600 hover:via-slate-500 hover:to-slate-600 
+           text-lime-400 border border-slate-600/30 transition-all shadow-lg shadow-slate-900/50;
+  }
+}
