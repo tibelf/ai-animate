@@ -14,7 +14,8 @@ import {
   CameraIcon, 
   UsersIcon, 
   PauseIcon, 
-  EditIcon 
+  EditIcon,
+  WandIcon 
 } from "lucide-react";
 import { TaskProgress } from "@/components/task-progress";
 import { api, type ProjectContext } from "@/lib/api";
@@ -227,34 +228,39 @@ export default function PreviewPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 py-8">
-      <div className="container mx-auto px-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950">
+      {/* Header */}
+      <header className="border-b border-slate-700/50 backdrop-blur-sm bg-slate-900/50">
+        <div className="max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/")}
+              className="w-10 h-10 bg-slate-800/50 hover:bg-slate-700/50 rounded-xl flex items-center justify-center border border-slate-600/30 transition-all"
+            >
+              <ArrowLeftIcon className="w-5 h-5 text-slate-300" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/50 border border-slate-600/30">
+                <WandIcon className="w-5 h-5 text-lime-400" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-100">漫飞</h1>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-6 py-8">
+        <div className="space-y-6">
           {/* Step Indicator */}
-          <div className="px-6 py-6">
+          <div className="py-2">
             <StepIndicator 
               steps={steps} 
               currentStep={3} 
               onStepClick={(step) => {
-                // Handle step navigation if needed
                 console.log('Step clicked:', step);
               }}
             />
           </div>
-
-          {/* Header */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-8"
-          >
-            <h1 className="text-4xl font-bold text-slate-100 mb-2">
-              🎬 视频预览
-            </h1>
-            <p className="text-slate-400">
-              查看生成的动画短片，编辑场景或下载成品
-            </p>
-          </motion.div>
 
           {/* Generation Progress */}
           {isGenerating && (
@@ -280,23 +286,36 @@ export default function PreviewPage() {
             >
               {/* Video Display */}
               <div className="aspect-video bg-black rounded-xl overflow-hidden relative group mb-4">
-                <img 
-                  src={(context as any).final_video || sceneBlocks[0]?.thumbnail || "https://picsum.photos/1200/675?random=99"}
-                  alt="视频预览" 
-                  className="w-full h-full object-cover" 
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="w-16 h-16 bg-slate-100/90 hover:bg-slate-100 rounded-full flex items-center justify-center transition-all shadow-2xl"
+                {(context as any).final_video ? (
+                  <video 
+                    src={(context as any).final_video}
+                    className="w-full h-full object-cover"
+                    controls
+                    poster={sceneBlocks[0]?.thumbnail}
                   >
-                    {isPlaying ? (
-                      <PauseIcon className="w-8 h-8 text-slate-800" />
-                    ) : (
-                      <PlayIcon className="w-8 h-8 text-slate-800 ml-0.5" />
-                    )}
-                  </button>
-                </div>
+                    您的浏览器不支持视频播放
+                  </video>
+                ) : (
+                  <>
+                    <img 
+                      src={sceneBlocks[0]?.thumbnail || "https://images.unsplash.com/photo-1511497584788-876760111969?w=1200"}
+                      alt="视频预览" 
+                      className="w-full h-full object-cover" 
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => setIsPlaying(!isPlaying)}
+                        className="w-16 h-16 bg-slate-100/90 hover:bg-slate-100 rounded-full flex items-center justify-center transition-all shadow-2xl"
+                      >
+                        {isPlaying ? (
+                          <PauseIcon className="w-8 h-8 text-slate-800" />
+                        ) : (
+                          <PlayIcon className="w-8 h-8 text-slate-800 ml-0.5" />
+                        )}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Timeline Controls */}
@@ -552,7 +571,7 @@ export default function PreviewPage() {
             </button>
           </motion.div>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

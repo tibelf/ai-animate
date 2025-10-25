@@ -216,10 +216,11 @@ export default function CharactersPage() {
                               : 'border-slate-600/30 hover:border-slate-500/50'
                           }`}
                         >
-                          {/* Placeholder for image - replace with actual image URL when available */}
-                          <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                            <span className="text-4xl">🎨</span>
-                          </div>
+                          <img 
+                            src={candidate} 
+                            alt={`${name} 候选 ${imageIndex + 1}`} 
+                            className="w-full h-full object-cover" 
+                          />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
                           {/* Zoom Button */}
