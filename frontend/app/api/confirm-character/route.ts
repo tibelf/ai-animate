@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { AnimePipeline } from '@/lib/utils/pipeline';
-import { activePipelines } from '../parse-text/route';
-import type { ConfirmCharacterRequest } from '@/lib/types';
+import { activePipelines } from '@/lib/pipeline-manager';
+import type { ConfirmCharacterRequest, Character } from '@/lib/types/index';
+
+// Check both server-side and client-side env vars
+function isMockMode(): boolean {
+  return process.env.NEXT_PUBLIC_USE_MOCK_API === 'true' || process.env.USE_MOCK_API === 'true';
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +17,14 @@ export async function POST(request: NextRequest) {
         { error: 'Invalid request: project_id, character_name, and selected_image_index are required' },
         { status: 400 }
       );
+    }
+
+    // Mock mode: just return success
+    if (isMockMode()) {
+      return NextResponse.json({
+        status: 'confirmed',
+        character: body.character_name,
+      });
     }
 
     let pipeline = activePipelines.get(body.project_id);
@@ -48,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     await pipeline.ctx.updateCharacter(
       body.character_name,
-      'selected_image',
+      'selected_image' as any,
       selectedImage
     );
 

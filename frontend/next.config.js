@@ -4,11 +4,9 @@ const path = require('path');
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'picsum.photos', 'images.unsplash.com'],
   },
-  experimental: {
-    outputFileTracingRoot: path.join(__dirname, '../'),
-  },
+  outputFileTracingRoot: path.join(__dirname, '../'),
 }
 
 module.exports = nextConfig

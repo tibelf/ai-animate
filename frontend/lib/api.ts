@@ -8,8 +8,7 @@ import type {
 
 export type { Character, ProjectContext };
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_BASE_URL = "";
 
 class ApiClient {
   async parseText(text: string): Promise<ParseTextResponse> {

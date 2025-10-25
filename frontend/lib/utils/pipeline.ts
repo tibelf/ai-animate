@@ -81,7 +81,7 @@ export class AnimePipeline {
     } catch (error) {
       this.progress.error = error instanceof Error ? error.message : 'Unknown error';
       this.progress.stage = 'error';
-      await this.ctx.update({ error: this.progress.error });
+      await this.ctx.update({ error: this.progress.error } as any);
       throw error;
     }
   }

@@ -36,7 +36,7 @@ export default function Home() {
     };
     addProject(newProject);
     setCurrentProject(newProjectId);
-    router.push('/characters');
+    router.push(`/novel-input?project_id=${newProjectId}`);
   };
 
   const handleSelectProject = (projectId: string) => {
@@ -45,19 +45,19 @@ export default function Home() {
     if (project) {
       switch (project.currentStep) {
         case 0:
-          router.push('/characters');
+          router.push(`/novel-input?project_id=${projectId}`);
           break;
         case 1:
-          router.push('/characters');
+          router.push(`/characters?project_id=${project.data.projectId}`);
           break;
         case 2:
-          router.push('/scenes');
+          router.push(`/scenes?project_id=${project.data.projectId}`);
           break;
         case 3:
-          router.push('/preview');
+          router.push(`/preview?project_id=${project.data.projectId}`);
           break;
         default:
-          router.push('/characters');
+          router.push(`/novel-input?project_id=${projectId}`);
       }
     }
   };
