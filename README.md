@@ -65,12 +65,24 @@ Application will run at `http://localhost:3000`
 For convenience, you can use the provided scripts:
 
 ```bash
-# Start the application
+# Start in production mode (real API calls)
 ./start.sh
+
+# Start in Mock mode (fake data, no real API calls)
+./start.sh --mock
+
+# View help
+./start.sh --help
 
 # Stop the application
 ./stop.sh
 ```
+
+**Mock Mode Benefits:**
+- 🎭 No API keys required
+- 🚀 Fast development without waiting for real AI responses
+- 💰 No API costs during frontend development
+- ✅ Perfect for UI/UX testing and styling work
 
 ## 📋 Features
 
@@ -98,6 +110,11 @@ The following services have placeholder implementations ready for integration:
 ### Environment Variables (.env.local)
 
 ```env
+# Mock Mode Configuration
+# Set to 'true' for fake data, 'false' for real API
+# NOTE: Use ./start.sh --mock instead of manually editing this
+NEXT_PUBLIC_USE_MOCK_API=false
+
 # Qiniu LLM Configuration
 QINIU_LLM_BASE_URL=https://openai.qiniu.com/v1
 QINIU_API_KEY=your_qiniu_api_key_here
@@ -110,6 +127,8 @@ IMAGE_GEN_BASE_URL=
 IMAGE_GEN_API_KEY=
 # ... etc
 ```
+
+**Note:** The `NEXT_PUBLIC_USE_MOCK_API` variable is automatically set by `start.sh` when you use the `--mock` flag. You don't need to manually edit `.env.local`.
 
 ## 📚 API Routes
 
