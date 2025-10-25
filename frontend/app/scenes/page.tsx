@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRightIcon, ArrowLeftIcon, RefreshCwIcon, EditIcon, SparklesIcon, CameraIcon, UsersIcon, XIcon, ZoomInIcon, ClockIcon, WandIcon } from "lucide-react";
 import { api, type ProjectContext } from "@/lib/api";
 import { StepIndicator } from "@/components/step-indicator";
 
-export default function ScenesPage() {
+function ScenesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = searchParams.get("project_id");
@@ -418,5 +418,20 @@ export default function ScenesPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function ScenesPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lime-400 mx-auto mb-4"></div>
+          <p className="text-slate-300">加载中...</p>
+        </div>
+      </div>
+    }>
+      <ScenesContent />
+    </Suspense>
   );
 }
