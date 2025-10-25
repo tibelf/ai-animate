@@ -1,122 +1,270 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
+import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { PlusIcon, WandIcon, ClockIcon, CheckCircleIcon, TrashIcon, Edit3Icon } from 'lucide-react';
+import { useProjects } from '@/lib/hooks/use-projects';
+import { mockProjects } from '@/lib/mock-data/projects';
 
 export default function Home() {
   const router = useRouter();
-  const [novelText, setNovelText] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { projects, addProject, setCurrentProject, deleteProject } = useProjects();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!novelText.trim()) {
-      setError("请输入小说文本");
-      return;
+  useEffect(() => {
+    if (projects.length === 0) {
+      mockProjects.forEach(project => addProject(project));
     }
+  }, []);
 
-    setIsLoading(true);
-    setError("");
+  const handleCreateProject = () => {
+    const newProjectId = `project_${Date.now()}`;
+    const newProject = {
+      id: newProjectId,
+      name: `新项目 ${projects.length + 1}`,
+      status: 'draft' as const,
+      currentStep: 0,
+      progress: 0,
+      createdAt: new Date().toISOString().split('T')[0],
+      data: {
+        projectId: '',
+        novel: '',
+        characters: [],
+        scenes: [],
+        videoUrl: ''
+      }
+    };
+    addProject(newProject);
+    setCurrentProject(newProjectId);
+    router.push(`/novel-input?project_id=${newProjectId}`);
+  };
 
-    try {
-      const result = await api.parseText(novelText);
-      
-      localStorage.setItem("currentProjectId", result.project_id);
-      
-      router.push(`/characters?project_id=${result.project_id}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "解析失败，请重试");
-    } finally {
-      setIsLoading(false);
+  const handleSelectProject = (projectId: string) => {
+    setCurrentProject(projectId);
+    const project = projects.find(p => p.id === projectId);
+    if (project) {
+      switch (project.currentStep) {
+        case 0:
+          router.push(`/novel-input?project_id=${projectId}`);
+          break;
+        case 1:
+          router.push(`/characters?project_id=${project.data.projectId}`);
+          break;
+        case 2:
+          router.push(`/scenes?project_id=${project.data.projectId}`);
+          break;
+        case 3:
+          router.push(`/preview?project_id=${project.data.projectId}`);
+          break;
+        default:
+          router.push(`/novel-input?project_id=${projectId}`);
+      }
     }
   };
 
+  const handleDeleteProject = (projectId: string) => {
+    if (confirm('确定要删除这个项目吗？')) {
+      deleteProject(projectId);
+    }
+  };
+
+  const getStatusBadge = (status: 'draft' | 'processing' | 'completed') => {
+    switch (status) {
+      case 'draft':
+        return (
+          <div className="flex items-center gap-2 px-3 py-1 bg-amber-500/20 border border-amber-500/30 rounded-full">
+            <Edit3Icon className="w-4 h-4 text-amber-400" />
+            <span className="text-sm text-amber-300">草稿</span>
+          </div>
+        );
+      case 'processing':
+        return (
+          <div className="flex items-center gap-2 px-3 py-1 bg-cyan-500/20 border border-cyan-500/30 rounded-full">
+            <ClockIcon className="w-4 h-4 text-cyan-400 animate-pulse" />
+            <span className="text-sm text-cyan-300">生成中</span>
+          </div>
+        );
+      case 'completed':
+        return (
+          <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
+            <CheckCircleIcon className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm text-emerald-300">已完成</span>
+          </div>
+        );
+    }
+  };
+
+  const stepNames = ['小说输入', '角色确认', '关键帧确认', '视频预览'];
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              AI 动漫生成系统
-            </h1>
-            <p className="text-xl text-gray-600 dark:text-gray-300">
-              将您的小说文本转换为精美的 2D 动漫短片
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-8">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label
-                  htmlFor="novel-text"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                >
-                  输入小说文本
-                </label>
-                <textarea
-                  id="novel-text"
-                  rows={12}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
-                  placeholder="在这里粘贴您的小说文本...&#10;&#10;示例：&#10;夕阳西下，校园操场上，少女独自站立。她黑色的长发随风飘扬，蓝色的眼眸凝视着远方。身穿整洁的校服，表情坚定而温柔..."
-                  value={novelText}
-                  onChange={(e) => setNovelText(e.target.value)}
-                  disabled={isLoading}
-                />
-                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                  提示：文本将被解析为场景和角色，建议 200-1000 字
-                </p>
+    <div className="min-h-screen w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950">
+      <header className="border-b border-slate-700/50 backdrop-blur-sm bg-slate-900/50">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-slate-700 via-slate-600 to-slate-800 rounded-xl flex items-center justify-center shadow-lg shadow-slate-900/50 border border-slate-600/30">
+                <WandIcon className="w-5 h-5 text-lime-400" />
               </div>
-
-              {error && (
-                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-sm text-red-600 dark:text-red-400">
-                    {error}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex justify-center">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isLoading}
-                  className="px-8 py-3 text-lg"
-                >
-                  {isLoading ? "解析中..." : "开始生成"}
-                </Button>
-              </div>
-            </form>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
-              <div className="text-3xl mb-2">📝</div>
-              <h3 className="font-semibold mb-2">文本解析</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                AI 自动分析小说，提取角色和场景
-              </p>
+              <h1 className="text-xl font-bold text-slate-100">漫飞</h1>
             </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
-              <div className="text-3xl mb-2">🎨</div>
-              <h3 className="font-semibold mb-2">角色生成</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                生成角色图像，确保视觉一致性
-              </p>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
-              <div className="text-3xl mb-2">🎬</div>
-              <h3 className="font-semibold mb-2">视频合成</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                自动生成带运镜效果的动漫短片
-              </p>
-            </div>
+            <button
+              onClick={handleCreateProject}
+              className="px-5 py-2 bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 hover:from-slate-600 hover:via-slate-500 hover:to-slate-600 rounded-xl text-lime-400 font-medium transition-all shadow-lg shadow-slate-900/50 flex items-center gap-2 border border-slate-600/30 text-sm"
+            >
+              <PlusIcon className="w-4 h-4" />
+              创建新项目
+            </button>
           </div>
         </div>
-      </div>
-    </main>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-6 py-8">
+        <div className="flex gap-4 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="flex-1 bg-slate-800/30 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30"
+          >
+            <div className="text-2xl font-bold text-slate-100 mb-1">
+              {projects.length}
+            </div>
+            <div className="text-sm text-slate-400">总项目数</div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex-1 bg-slate-800/30 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30"
+          >
+            <div className="text-2xl font-bold text-slate-100 mb-1">
+              {projects.filter(p => p.status === 'processing').length}
+            </div>
+            <div className="text-sm text-slate-400">生成中</div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex-1 bg-slate-800/30 backdrop-blur-sm rounded-xl p-4 border border-slate-600/30"
+          >
+            <div className="text-2xl font-bold text-slate-100 mb-1">
+              {projects.filter(p => p.status === 'completed').length}
+            </div>
+            <div className="text-sm text-slate-400">已完成</div>
+          </motion.div>
+        </div>
+
+        {projects.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16"
+          >
+            <div className="w-20 h-20 bg-slate-800/30 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-600/30">
+              <WandIcon className="w-10 h-10 text-slate-500" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-100 mb-2">
+              开始创作您的第一个项目
+            </h3>
+            <p className="text-sm text-slate-400 mb-6 max-w-md mx-auto">
+              输入您的故事，AI将自动生成精美的动漫短片
+            </p>
+            <button
+              onClick={handleCreateProject}
+              className="px-6 py-3 bg-gradient-to-r from-slate-700 via-slate-600 to-slate-700 hover:from-slate-600 hover:via-slate-500 hover:to-slate-600 rounded-xl text-lime-400 font-medium transition-all shadow-lg shadow-slate-900/50 flex items-center gap-2 mx-auto border border-slate-600/30"
+            >
+              <WandIcon className="w-5 h-5" />
+              创建第一个项目
+            </button>
+          </motion.div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {projects.map((project, index) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-slate-800/30 backdrop-blur-sm rounded-xl border border-slate-600/30 overflow-hidden hover:border-slate-500/50 transition-all group"
+              >
+                <div className="relative aspect-video bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900 overflow-hidden">
+                  {project.thumbnail ? (
+                    <img src={project.thumbnail} alt={project.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <WandIcon className="w-10 h-10 text-slate-600" />
+                    </div>
+                  )}
+                  
+                  <div className="absolute top-2 right-2">
+                    {getStatusBadge(project.status)}
+                  </div>
+
+                  {project.status !== 'completed' && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-slate-900/80 backdrop-blur-sm px-3 py-2">
+                      <div className="flex items-center justify-between text-xs mb-1.5">
+                        <span className="text-slate-300">
+                          {stepNames[project.currentStep]}
+                        </span>
+                        <span className="text-lime-400 font-medium">
+                          {project.progress}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
+                        <motion.div
+                          className="h-full bg-gradient-to-r from-lime-500 via-lime-400 to-lime-500"
+                          initial={{ width: 0 }}
+                          animate={{ width: `${project.progress}%` }}
+                          transition={{ duration: 0.5 }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4">
+                  <h3 className="text-lg font-bold text-slate-100 mb-1">
+                    {project.name}
+                  </h3>
+                  {project.description && (
+                    <p className="text-xs text-slate-400 mb-3 line-clamp-2">
+                      {project.description}
+                    </p>
+                  )}
+                  
+                  <div className="flex items-center justify-between text-xs text-slate-500 mb-3">
+                    <span>{project.createdAt}</span>
+                    <span>
+                      {project.currentStep + 1}/{stepNames.length}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleSelectProject(project.id)}
+                      className="flex-1 px-3 py-1.5 bg-gradient-to-r from-slate-700 to-slate-600 hover:from-slate-600 hover:to-slate-500 rounded-lg text-lime-400 font-medium transition-all border border-slate-600/30 text-sm"
+                    >
+                      {project.status === 'completed' ? '查看详情' : '继续编辑'}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteProject(project.id);
+                      }}
+                      className="px-3 py-1.5 bg-slate-800/50 hover:bg-red-500/20 border border-slate-600/30 hover:border-red-500/30 rounded-lg text-slate-400 hover:text-red-400 transition-all"
+                    >
+                      <TrashIcon className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
   );
 }

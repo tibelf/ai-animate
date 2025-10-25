@@ -23,15 +23,15 @@ export class ContextManager {
   async initialize(characters: Record<string, Character>, scenes: Scene[]): Promise<ProjectContext> {
     await this.ensureDirectories();
 
-    const context: ProjectContext = {
+    const context: any = {
       meta: {
         version: 1,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
       status: 'text_parsed',
-      characters,
-      scenes,
+      characters: characters as any,
+      scenes: scenes as any,
     };
 
     await this.save(context);
@@ -62,8 +62,8 @@ export class ContextManager {
       await fs.writeFile(historyFile, JSON.stringify(existingContext, null, 2));
     }
 
-    context.meta.version = existingContext ? existingContext.meta.version + 1 : 1;
-    context.meta.updated_at = new Date().toISOString();
+    (context as any).meta.version = existingContext ? (existingContext as any).meta.version + 1 : 1;
+    (context as any).meta.updated_at = new Date().toISOString();
 
     await fs.writeFile(this.contextPath, JSON.stringify(context, null, 2));
   }
@@ -96,7 +96,7 @@ export class ContextManager {
 
   async updateScene(sceneId: string, field: keyof Scene, value: any): Promise<void> {
     const context = await this.load();
-    const scene = context.scenes.find((s) => s.id === sceneId);
+    const scene = context.scenes.find((s: any) => s.id === sceneId);
     if (!scene) {
       throw new Error(`Scene ${sceneId} not found`);
     }

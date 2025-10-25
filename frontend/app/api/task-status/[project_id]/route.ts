@@ -1,20 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ContextManager } from '@/lib/utils/context-manager';
-import { activePipelines } from '../../parse-text/route';
-import type { TaskStatusResponse } from '@/lib/types';
+import { activePipelines } from '@/lib/pipeline-manager';
+import type { TaskStatusResponse } from '@/lib/types/index';
+
+// Check both server-side and client-side env vars
+function isMockMode(): boolean {
+  return process.env.NEXT_PUBLIC_USE_MOCK_API === 'true' || process.env.USE_MOCK_API === 'true';
+}
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { project_id: string } }
+  { params }: { params: Promise<{ project_id: string }> }
 ) {
   try {
-    const projectId = params.project_id;
+    const resolvedParams = await params;
+    const projectId = resolvedParams.project_id;
 
     if (!projectId) {
       return NextResponse.json(
         { error: 'project_id is required' },
         { status: 400 }
       );
+    }
+
+    // Mock mode: return fake task status
+    if (isMockMode()) {
+      const mockResponse: TaskStatusResponse = {
+        project_id: projectId,
+        stage: 'completed',
+        progress: 100,
+        task: 'Mock generation completed',
+        error: undefined,
+      };
+      return NextResponse.json(mockResponse);
     }
 
     const pipeline = activePipelines.get(projectId);
@@ -31,7 +49,7 @@ export async function GET(
       stage: context.status || 'unknown',
       progress: context.status === 'completed' ? 100 : 0,
       task: '',
-      error: context.error,
+      error: (context as any).error,
     };
 
     return NextResponse.json(response);

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ContextManager } from '@/lib/utils/context-manager';
-import type { RollbackRequest } from '@/lib/types';
+import type { RollbackRequest } from '@/lib/types/index';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       status: 'rolled_back',
-      version: context.meta.version,
+      version: (context as any).meta?.version || 1,
     });
   } catch (error) {
     console.error('Error in rollback:', error);
